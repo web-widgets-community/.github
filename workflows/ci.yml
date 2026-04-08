@@ -1,0 +1,51 @@
+name: Kurgu Widget QA & Security Check
+
+# These tests will run automatically when a Pull Request is opened against the main branch.
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  # Stage 1: Code Quality and Formatting Check
+  lint-and-format:
+    name: ESLint & Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      # Check code formatting with Prettier (Only checks, doesn't modify)
+      - name: Prettier Format Check
+        run: npx prettier --check "**/*.{js,css,html}"
+
+      # Run ESLint to check for syntax errors and forbidden code
+      - name: ESLint Check
+        run: npx eslint .
+
+  # Stage 2: Security and Malicious Code Scan (CodeQL)
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # GitHub's advanced security scanner.
+      # Catches malicious file attachments, injection vulnerabilities, and suspicious data flows.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
